@@ -1,0 +1,86 @@
+
+var token = "5790049951:AAHEVaA9NSDLvGmtvR3eTATVC_bv4pTTB50"; // FILL IN YOUR OWN TOKEN
+var telegramUrl = "https://api.telegram.org/bot" + token;
+var webAppUrl = "https://script.google.com/macros/s/AKfycbyUsk1Ud5MzRQ7ZZcYDHw9HGiajphEuqKbsj0kEAktBGwqq6hqlgfGzvCrLJ2vf2G6FdA/exec"; // FILL IN YOUR GOOGLE WEB APP ADDRESS
+var ssId = "19IsrPXt9Vgjrli8YcgTCiD2P5PxdQi1YT3S1Pjnv2mg"; // FILL IN THE ID OF YOUR SPREADSHEET
+
+function getMe() {
+  var url = telegramUrl + "/getMe";
+  var response = UrlFetchApp.fetch(url);
+  Logger.log(response.getContentText());
+}
+
+function setWebhook() {
+  var url = telegramUrl + "/setWebhook?url=" + webAppUrl;
+  var response = UrlFetchApp.fetch(url);
+  Logger.log(response.getContentText());
+}
+
+function sendText(id, text) {
+  var url = telegramUrl + "/sendMessage?chat_id=" + id + "&text=" + text;
+  var response = UrlFetchApp.fetch(url);
+  Logger.log(response.getContentText());
+}
+
+function doGet(e) {
+  return HtmlService.createHtmlOutput("Hi there");
+}
+
+function doPost(e) {
+
+  //--------------------------------------
+  currentdate = new Date();
+  var oneJan = new Date(currentdate.getFullYear(), 0, 1);
+  var numberOfDays = Math.floor((currentdate - oneJan) / (24 * 60 * 60 * 1000));
+  var result = Math.ceil((currentdate.getDay() + 1 + numberOfDays) / 7); //number of week
+
+  //Количество дней от 1 января до понедельника этой недели
+  var countdays = result * 7 - 5;
+  //1 января текущего года
+  var firstDayOfCurYear = new Date();
+  firstDayOfCurYear.setFullYear(firstDayOfCurYear.getFullYear(), 0, 1);
+  //Точная дата понедельника для заданной недели
+  var dateOfMondayInWeek = new Date(firstDayOfCurYear.valueOf() + countdays * 24 * 60 * 60 * 1000);
+  var nextFriday = new Date(firstDayOfCurYear.valueOf() + (countdays + 11) * 24 * 60 * 60 * 1000)
+  var thisFriday = new Date(firstDayOfCurYear.valueOf() + (countdays + 4) * 24 * 60 * 60 * 1000)
+  var options = {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+
+  }
+
+  //---------------------------------------
+
+  // this is where telegram works
+  var data = JSON.parse(e.postData.contents);
+  var text = data.message.text;
+  var id = data.message.chat.id;
+  var name = data.message.chat.first_name + " " + data.message.chat.last_name;
+
+  var answer = "Привіт " + name + ", Ваша заявка принята. Заявка будет рассмотрена, и если Вы не получали еще зарплаты за полный месяц, тогда " + "аванс будет выплачен в ету пятницу " + thisFriday.toLocaleString("ru", options);
+  var answer1 = "Привіт " + name + ", Ваша заявка принята.  Заявка будет рассмотрена, и если Вы не получали еще зарплаты за полный месяц, тогда " + "аванс будет выплачен в СЛЕДУЮЩУЮ пятницу " + nextFriday.toLocaleString("ru", options);
+
+
+  if (text == "/start") {
+
+  } else {
+
+    if (currentdate <= dateOfMondayInWeek) {
+      sendText(id, answer);
+    } else {
+      sendText(id, answer1);
+    }
+  }
+var text_new = text.replace(/\n/g, " ").replace(/\v/g, " ").replace(/\t/g, " ");
+
+
+  SpreadsheetApp.openById(ssId).getSheets()[0].appendRow([new Date(), text_new]);
+  if (/^@/.test(text)) {
+    var sheetName = text.slice(1).split(" ")[0];
+    var sheet = SpreadsheetApp.openById(ssId).getSheetByName(sheetName) ? SpreadsheetApp.openById(ssId).getSheetByName(sheetName) : SpreadsheetApp.openById(ssId).insertSheet(sheetName);
+    var comment = text.split(" ").slice(1).join(" ");
+    sheet.appendRow([new Date(), text_new]);
+  }
+}
+
