@@ -1,0 +1,115 @@
+var token = "6254556512:AAFmYf8HkksV6ZiuxMb-_BelSVUnHw8vHIU"; // FILL IN YOUR OWN TOKEN
+var telegramUrl = "https://api.telegram.org/bot" + token;
+var webAppUrl = "https://script.google.com/macros/s/AKfycbwsx2uyqFqJhUliUc3EPVT4vPmsC7MEddkJTzXkV54Whk1qkCNB8Bjhs0PvpxKueC8oug/exec"; // FILL IN YOUR GOOGLE WEB APP ADDRESS
+var ssId = "1uomWk1-oaOaKeDtIvOZ8WqqWlS8NJBWAyFvgAeV48xc"; // FILL IN THE ID OF YOUR SPREADSHEET
+
+function getMe() {
+  var url = telegramUrl + "/getMe";
+  var response = UrlFetchApp.fetch(url);
+  Logger.log(response.getContentText());
+}
+
+function setWebhook() {
+  var url = telegramUrl + "/setWebhook?url=" + webAppUrl;
+  var response = UrlFetchApp.fetch(url);
+  Logger.log(response.getContentText());
+}
+
+function sendText(id, text) {
+  var url = telegramUrl + "/sendMessage?chat_id=" + id + "&text=" + text;
+  var response = UrlFetchApp.fetch(url);
+  Logger.log(response.getContentText());
+}
+
+function doGet(e) {
+  return HtmlService.createHtmlOutput("Hi there");
+}
+
+function doPost(e) {
+
+  // this is where telegram works
+  var data = JSON.parse(e.postData.contents);
+  var text = data.message.text;
+  var id = data.message.chat.id;
+//  var foundRow = searchInFirstColumn(text, id);
+  var answer_final_1 =  displayRowValues1(text);
+var answer_final_2 =  displayRowValues2(text);
+var answer_final_3 =  displayRowValues3(text);
+var answer_final_4 =  displayRowValues4(text);
+var answer_final_5 =  displayRowValues5(text);
+var answer_final_6 =  "Якщо в полі дата розрахунку немає дати і в полі коментар є якийсь коментар - звяжиться будь ласка з координатором.";
+sendText(id,answer_final_1);
+sendText(id,answer_final_2);
+sendText(id,answer_final_3);
+sendText(id,answer_final_4);
+sendText(id,answer_final_5);
+sendText(id,answer_final_6);
+
+}
+
+function searchInFirstColumn(text) {
+  var sheet = SpreadsheetApp.getActiveSheet();
+  var dataRange = sheet.getRange("A1:A" + sheet.getLastRow());
+  var values = dataRange.getValues();
+  var foundRow = -1;
+
+Logger.log(text);
+  for (var i = 0; i < values.length; i++) {
+    if (values[i][0] == text) {
+      foundRow = i + 1;
+      break;
+    }
+  }
+  if (foundRow > -1) {
+     return foundRow;
+  } else {
+    var answer_1="Такого користувача не існує, спробуйте ще раз";
+  return sendText(id, answer_1);
+  }
+
+}
+function displayRowValues1(text) {
+  var foundRow = searchInFirstColumn(text);
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var range = sheet.getRange(foundRow, 1, 1, sheet.getLastColumn());
+  var values = range.getValues();
+  var textMessage = "Ваше Прізвище " + values[0][1];
+  return textMessage;
+}
+function displayRowValues2(text) {
+  var foundRow = searchInFirstColumn(text);
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var range = sheet.getRange(foundRow, 1, 1, sheet.getLastColumn());
+  var values = range.getValues();
+  var textMessage = "Ваше імя " + values[0][2];
+  return textMessage;
+}
+function displayRowValues3(text) {
+  var foundRow = searchInFirstColumn(text);
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var range = sheet.getRange(foundRow, 1, 1, sheet.getLastColumn());
+  var values = range.getValues();
+  const dateStr = values[0][4]; 
+const dateObj = new Date(dateStr); 
+const options = { day: '2-digit', month: '2-digit', year: 'numeric' }; 
+const formattedDate = dateObj.toLocaleDateString('uk-UA', options); 
+  var textMessage = "Дата розрахунку " + formattedDate;
+  return textMessage;
+}
+
+function displayRowValues4(text) {
+  var foundRow = searchInFirstColumn(text);
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var range = sheet.getRange(foundRow, 1, 1, sheet.getLastColumn());
+  var values = range.getValues();
+  var textMessage = "Сума на повернення " + values[0][5];
+  return textMessage;
+}
+function displayRowValues5(text) {
+  var foundRow = searchInFirstColumn(text);
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var range = sheet.getRange(foundRow, 1, 1, sheet.getLastColumn());
+  var values = range.getValues();
+  var textMessage = "Коментар " + values[0][7];
+  return textMessage;
+}
